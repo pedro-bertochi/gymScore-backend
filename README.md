@@ -87,7 +87,7 @@ go mod tidy
 Inicie o servidor em modo de desenvolvimento:
 
 ```bash
-go run cmd/api/main.go
+go run main.go
 ```
 
 O servidor estará rodando em: `http://localhost:3000`
