@@ -8,14 +8,35 @@ import (
 	"syscall"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/swagger"
 	"gynScore-backend/internal/config"
 	"gynScore-backend/internal/controllers"
 	"gynScore-backend/internal/middlewares"
 	"gynScore-backend/internal/repositories"
 	"gynScore-backend/internal/routes"
 	"gynScore-backend/internal/services"
+
+	_ "gynScore-backend/docs"
 )
 
+// @title GymScore API
+// @version 1.0
+// @description API para o sistema GymScore de desafios e treinos.
+// @termsOfService http://swagger.io/terms/
+
+// @contact.name API Support
+// @contact.url http://www.swagger.io/support
+// @contact.email support@swagger.io
+
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host localhost:3000
+// @BasePath /
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Digite "Bearer " seguido do seu token JWT. Exemplo: "Bearer eyJhbGciOiJIUzI1..."
 func main() {
 	// ─── Carregamento de configurações ───────────────────────────────────────────
 	cfg := config.Load()
@@ -58,12 +79,16 @@ func main() {
 	app.Use(middlewares.LoggerMiddleware())
 	app.Use(middlewares.CORSMiddleware())
 
+	// Rota do Swagger
+	app.Get("/swagger/*", swagger.HandlerDefault)
+
 	// Registro das rotas
 	routes.Setup(app, cfg, usuarioCtrl, desafioCtrl, amizadeCtrl)
 
 	// ─── Inicialização do servidor ────────────────────────────────────────────────
 	addr := fmt.Sprintf(":%s", cfg.AppPort)
 	log.Printf("[SERVER] GymScore API iniciando na porta %s (ambiente: %s)", cfg.AppPort, cfg.AppEnv)
+	log.Printf("[SERVER] Swagger UI disponível em: http://localhost:%s/swagger/", cfg.AppPort)
 
 	// Graceful shutdown: aguarda sinal de interrupção antes de encerrar
 	go func() {
