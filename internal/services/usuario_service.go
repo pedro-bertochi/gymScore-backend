@@ -3,11 +3,12 @@ package services
 import (
 	"errors"
 	"fmt"
+	"regexp"
 
+	"golang.org/x/crypto/bcrypt"
 	"gynScore-backend/internal/models"
 	"gynScore-backend/internal/repositories"
 	"gynScore-backend/pkg/utils"
-	"golang.org/x/crypto/bcrypt"
 )
 
 // UsuarioService define as operações de negócio para usuários
@@ -30,30 +31,50 @@ func NovoUsuarioService(repo repositories.UsuarioRepository) UsuarioService {
 
 // CriarUsuario valida os dados e persiste um novo usuário no banco
 func (s *usuarioService) CriarUsuario(req *models.CriarUsuarioRequest) (*models.UsuarioResponse, error) {
-	// Validação de e-mail via regex (equivalente ao servidor Java original)
+	// 1. Validação de e-mail via regex
 	if !utils.ValidarEmail(req.Email) {
 		return nil, errors.New("e-mail inválido")
 	}
 
-	// Verificar duplicidade de e-mail
-	existente, err := s.repo.BuscarPorEmail(req.Email)
-	if err != nil {
-		return nil, fmt.Errorf("erro ao verificar e-mail: %w", err)
+	// 2. Validação RIGOROSA de CPF conforme a request (14 caracteres: 000.000.000-00)
+	if len(req.CPF) != 14 {
+		return nil, errors.New("CPF deve estar no formato 000.000.000-00 (14 caracteres)")
 	}
-	if existente != nil {
+
+	// Limpar apenas para validar o algoritmo, mas salvar o original da request
+	re := regexp.MustCompile(`[^0-9]`)
+	cpfLimpo := re.ReplaceAllString(req.CPF, "")
+	if len(cpfLimpo) != 11 {
+		return nil, errors.New("CPF informado contém caracteres inválidos ou quantidade de dígitos incorreta")
+	}
+	
+	if !utils.ValidarCPF(cpfLimpo) {
+		return nil, errors.New("CPF informado é inválido")
+	}
+
+	// 3. Verificar duplicidade de e-mail e CPF (usando o valor exato da request)
+	existenteEmail, _ := s.repo.BuscarPorEmail(req.Email)
+	if existenteEmail != nil {
 		return nil, errors.New("e-mail já cadastrado")
 	}
 
-	// Hash da senha com bcrypt
+	existenteCPF, _ := s.repo.BuscarPorCPF(req.CPF)
+	if existenteCPF != nil {
+		return nil, errors.New("CPF já cadastrado")
+	}
+
+	// 4. Hash da senha com bcrypt
 	hashSenha, err := bcrypt.GenerateFromPassword([]byte(req.Senha), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, fmt.Errorf("erro ao processar senha: %w", err)
 	}
 
+	// 5. Criar entidade e salvar exatamente como enviado
 	usuario := &models.Usuario{
 		Nome:           req.Nome,
 		Sobrenome:      req.Sobrenome,
 		Email:          req.Email,
+		CPF:            req.CPF, // Mantém o valor exato da request
 		Senha:          string(hashSenha),
 		DataNascimento: req.DataNascimento,
 		Genero:         req.Genero,
@@ -127,6 +148,7 @@ func toUsuarioResponse(u *models.Usuario) *models.UsuarioResponse {
 		Nome:           u.Nome,
 		Sobrenome:      u.Sobrenome,
 		Email:          u.Email,
+		CPF:            u.CPF,
 		DataNascimento: u.DataNascimento,
 		Genero:         u.Genero,
 		Saldo:          u.Saldo,

@@ -21,6 +21,9 @@ type Config struct {
 	DBName     string
 	JWTSecret  string
 	AppEnv     string
+	PIXChave   string
+	PIXNome    string
+	PIXCidade  string
 }
 
 // Load carrega as variáveis de ambiente do arquivo .env
@@ -36,10 +39,13 @@ func Load() *Config {
 		DBUser:     getEnv("DB_USER", "root"),
 		DBPassword: getEnv("DB_PASSWORD", ""),
 		DBName:     getEnv("DB_NAME", "gymscore"),
-		JWTSecret:  getEnv("JWT_SECRET", "gymscore_secret_key_change_in_production"),
-		AppEnv:     getEnv("APP_ENV", "development"),
+			JWTSecret:  getEnv("JWT_SECRET", "gymscore_secret_key_change_in_production"),
+			AppEnv:     getEnv("APP_ENV", "development"),
+			PIXChave:   getEnv("PIX_CHAVE", "sua-chave-pix@email.com"),
+			PIXNome:    getEnv("PIX_NOME_RECEBEDOR", "GYMSCORE SISTEMA"),
+			PIXCidade:  getEnv("PIX_CIDADE_RECEBEDOR", "SAO PAULO"),
+		}
 	}
-}
 
 // ConnectDB inicializa a conexão com o banco de dados MySQL via GORM
 func ConnectDB(cfg *Config) (*gorm.DB, error) {

@@ -12,6 +12,7 @@ import (
 	"gynScore-backend/internal/config"
 	"gynScore-backend/internal/controllers"
 	"gynScore-backend/internal/middlewares"
+	"gynScore-backend/internal/models"
 	"gynScore-backend/internal/repositories"
 	"gynScore-backend/internal/routes"
 	"gynScore-backend/internal/services"
@@ -47,9 +48,17 @@ func main() {
 		log.Fatalf("[FATAL] Não foi possível conectar ao banco de dados: %v", err)
 	}
 
-	// Auto-migração removida conforme solicitação do usuário.
-	// O banco de dados já possui as tabelas e procedures necessárias.
-	log.Println("[DB] Conexão com o banco de dados concluída (Auto-migração desativada)")
+	// ─── Auto-migração ativada conforme solicitação do usuário ───────────────────
+	log.Println("[DB] Iniciando auto-migração das tabelas...")
+	err = db.AutoMigrate(
+		&models.Usuario{},
+		&models.Desafio{},
+		&models.Amizade{},
+	)
+	if err != nil {
+		log.Fatalf("[FATAL] Erro ao realizar auto-migração: %v", err)
+	}
+	log.Println("[DB] Auto-migração concluída com sucesso")
 
 	// ─── Injeção de dependências ──────────────────────────────────────────────────
 
@@ -62,11 +71,13 @@ func main() {
 	usuarioSvc := services.NovoUsuarioService(usuarioRepo)
 	desafioSvc := services.NovoDesafioService(desafioRepo, usuarioRepo)
 	amizadeSvc := services.NovoAmizadeService(amizadeRepo, usuarioRepo)
+	pixSvc := services.NovoPIXService(cfg, usuarioRepo)
 
 	// Controllers
 	usuarioCtrl := controllers.NovoUsuarioController(usuarioSvc, cfg)
 	desafioCtrl := controllers.NovoDesafioController(desafioSvc)
 	amizadeCtrl := controllers.NovoAmizadeController(amizadeSvc)
+	pixCtrl := controllers.NovoPIXController(pixSvc)
 
 	// ─── Configuração do servidor Fiber ──────────────────────────────────────────
 	app := fiber.New(fiber.Config{
@@ -83,14 +94,14 @@ func main() {
 	app.Get("/swagger/*", swagger.HandlerDefault)
 
 	// Registro das rotas
-	routes.Setup(app, cfg, usuarioCtrl, desafioCtrl, amizadeCtrl)
+	routes.Setup(app, cfg, usuarioCtrl, desafioCtrl, amizadeCtrl, pixCtrl)
 
 	// ─── Inicialização do servidor ────────────────────────────────────────────────
 	addr := fmt.Sprintf(":%s", cfg.AppPort)
 	log.Printf("[SERVER] GymScore API iniciando na porta %s (ambiente: %s)", cfg.AppPort, cfg.AppEnv)
 	log.Printf("[SERVER] Swagger UI disponível em: http://localhost:%s/swagger/", cfg.AppPort)
 
-	// Graceful shutdown: aguarda sinal de interrupção antes de encerrar
+	// Graceful shutdown
 	go func() {
 		if err := app.Listen(addr); err != nil {
 			log.Fatalf("[FATAL] Erro ao iniciar servidor: %v", err)
@@ -101,11 +112,11 @@ func main() {
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 	<-quit
 
-	log.Println("[SERVER] Encerrando servidor graciosamente...")
+	log.Println("[SERVER] Encerrando servidor...")
 	if err := app.Shutdown(); err != nil {
 		log.Printf("[SERVER] Erro ao encerrar servidor: %v", err)
 	}
-	log.Println("[SERVER] Servidor encerrado com sucesso")
+	log.Println("[SERVER] Servidor encerrado.")
 }
 
 // errorHandler é o handler global de erros do Fiber

@@ -15,6 +15,7 @@ func Setup(
 	usuarioCtrl *controllers.UsuarioController,
 	desafioCtrl *controllers.DesafioController,
 	amizadeCtrl *controllers.AmizadeController,
+	pixCtrl controllers.PIXController,
 ) {
 	// Rota de health check
 	app.Get("/health", func(c *fiber.Ctx) error {
@@ -56,4 +57,7 @@ func Setup(
 	protected.Post("/amigos/aceitar", amizadeCtrl.AceitarAmizade)
 	protected.Post("/amigos/remover", amizadeCtrl.RemoverAmigo)
 	protected.Get("/amigos/:id", amizadeCtrl.ListarAmigos)
+
+	// Pagamento PIX (Depósito de Saldo)
+	protected.Post("/pagamento/pix", pixCtrl.GerarPagamento)
 }

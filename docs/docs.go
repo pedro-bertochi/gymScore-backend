@@ -422,6 +422,63 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/pagamento/pix": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Gera um QR Code para depósito. O valor é creditado automaticamente no saldo do usuário após a geração. Requer validação de CPF.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Pagamento"
+                ],
+                "summary": "Depositar saldo via PIX",
+                "parameters": [
+                    {
+                        "description": "Dados do Depósito",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.PIXRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/utils.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/models.PIXResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/usuarios": {
             "get": {
                 "description": "Retorna todos os usuários cadastrados",
@@ -598,6 +655,7 @@ const docTemplate = `{
         "models.CriarUsuarioRequest": {
             "type": "object",
             "required": [
+                "cpf",
                 "data_nascimento",
                 "email",
                 "genero",
@@ -606,6 +664,10 @@ const docTemplate = `{
                 "sobrenome"
             ],
             "properties": {
+                "cpf": {
+                    "description": "Formato: 000.000.000-00",
+                    "type": "string"
+                },
                 "data_nascimento": {
                     "type": "string"
                 },
@@ -677,6 +739,37 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "senha": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.PIXRequest": {
+            "type": "object",
+            "properties": {
+                "cpf": {
+                    "type": "string",
+                    "example": "123.456.789-00"
+                },
+                "id_usuario": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "valor": {
+                    "type": "number",
+                    "example": 50
+                }
+            }
+        },
+        "models.PIXResponse": {
+            "type": "object",
+            "properties": {
+                "novo_saldo": {
+                    "type": "number"
+                },
+                "payload": {
+                    "type": "string"
+                },
+                "qrcode_base64": {
                     "type": "string"
                 }
             }

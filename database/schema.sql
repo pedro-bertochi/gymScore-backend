@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     nome VARCHAR(100) NOT NULL,
     sobrenome VARCHAR(100) NOT NULL,
+    CPF VARCHAR(14) NOT NULL,
     email VARCHAR(150) NOT NULL,
     senha VARCHAR(255) NOT NULL,
     data_nascimento DATE NOT NULL,
@@ -20,6 +21,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
 
     PRIMARY KEY (id),
     UNIQUE KEY uq_usuarios_email (email),
+    UNIQUE KEY uq_usuarios_cpf (CPF),
     INDEX idx_usuarios_nome (nome),
     INDEX idx_usuarios_criado_em (criado_em)
 );

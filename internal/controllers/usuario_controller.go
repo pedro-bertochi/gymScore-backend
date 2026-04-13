@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"strconv"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"gynScore-backend/internal/config"
@@ -55,7 +56,7 @@ func (ctrl *UsuarioController) CriarUsuario(c *fiber.Ctx) error {
 
 // Login godoc
 // @Summary     Autenticar usuário
-// @Description Valida credenciais e retorna token JWT
+// @Description Valida credenciais e retorna token JWT via JSON e Cookie
 // @Tags        usuarios
 // @Accept      json
 // @Produce     json
@@ -77,6 +78,17 @@ func (ctrl *UsuarioController) Login(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.Error(c, fiber.StatusUnauthorized, err.Error())
 	}
+
+	// Configurar Cookie com o Token JWT
+	c.Cookie(&fiber.Cookie{
+		Name:     "jwt",
+		Value:    resp.Token,
+		Expires:  time.Now().Add(time.Hour * 72), // 3 dias (mesmo tempo do token)
+		HTTPOnly: true,
+		Secure:   false, // Em produção deve ser true se usar HTTPS
+		SameSite: "Lax",
+		Path:     "/",
+	})
 
 	return utils.Success(c, fiber.StatusOK, "Usuário autenticado com sucesso", resp)
 }

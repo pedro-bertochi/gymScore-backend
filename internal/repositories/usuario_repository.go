@@ -12,6 +12,7 @@ type UsuarioRepository interface {
 	Criar(usuario *models.Usuario) error
 	BuscarPorID(id uint) (*models.Usuario, error)
 	BuscarPorEmail(email string) (*models.Usuario, error)
+	BuscarPorCPF(cpf string) (*models.Usuario, error)
 	Atualizar(usuario *models.Usuario) error
 	Deletar(id uint) error
 	Listar() ([]models.Usuario, error)
@@ -49,6 +50,19 @@ func (r *usuarioRepository) BuscarPorID(id uint) (*models.Usuario, error) {
 func (r *usuarioRepository) BuscarPorEmail(email string) (*models.Usuario, error) {
 	var usuario models.Usuario
 	err := r.db.Where("email = ?", email).First(&usuario).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &usuario, nil
+}
+
+// BuscarPorCPF retorna um usuário pelo seu CPF
+func (r *usuarioRepository) BuscarPorCPF(cpf string) (*models.Usuario, error) {
+	var usuario models.Usuario
+	err := r.db.Where("cpf = ?", cpf).First(&usuario).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil

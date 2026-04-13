@@ -7,13 +7,14 @@ type Usuario struct {
 	ID             uint      `gorm:"primaryKey;autoIncrement" json:"id"`
 	Nome           string    `gorm:"type:varchar(100);not null" json:"nome"`
 	Sobrenome      string    `gorm:"type:varchar(100);not null" json:"sobrenome"`
+	CPF            string    `gorm:"type:varchar(14);uniqueIndex;not null" json:"cpf"`
 	Email          string    `gorm:"type:varchar(150);uniqueIndex;not null" json:"email"`
 	Senha          string    `gorm:"type:varchar(255);not null" json:"-"`
 	DataNascimento string    `gorm:"type:date;not null" json:"data_nascimento"`
 	Genero         string    `gorm:"type:enum('M','F','O');not null" json:"genero"`
 	Saldo          float64   `gorm:"type:decimal(10,2);default:0.00" json:"saldo"`
-	CriadoEm      time.Time `gorm:"autoCreateTime" json:"criado_em"`
-	AtualizadoEm  time.Time `gorm:"autoUpdateTime" json:"atualizado_em"`
+	CriadoEm       time.Time `gorm:"autoCreateTime" json:"criado_em"`
+	AtualizadoEm   time.Time `gorm:"autoUpdateTime" json:"atualizado_em"`
 }
 
 // TableName define o nome da tabela no banco de dados
@@ -27,16 +28,18 @@ type UsuarioResponse struct {
 	Nome           string    `json:"nome"`
 	Sobrenome      string    `json:"sobrenome"`
 	Email          string    `json:"email"`
+	CPF            string    `json:"cpf"`
 	DataNascimento string    `json:"data_nascimento"`
 	Genero         string    `json:"genero"`
 	Saldo          float64   `json:"saldo"`
-	CriadoEm      time.Time `json:"criado_em"`
+	CriadoEm       time.Time `json:"criado_em"`
 }
 
 // CriarUsuarioRequest é o DTO de entrada para criação de usuário
 type CriarUsuarioRequest struct {
 	Nome           string `json:"nome" validate:"required,min=2,max=100"`
 	Sobrenome      string `json:"sobrenome" validate:"required,min=2,max=100"`
+	CPF            string `json:"cpf" validate:"required"` // Aceita com ou sem pontuação
 	Email          string `json:"email" validate:"required,email"`
 	Senha          string `json:"senha" validate:"required,min=6"`
 	DataNascimento string `json:"data_nascimento" validate:"required"`

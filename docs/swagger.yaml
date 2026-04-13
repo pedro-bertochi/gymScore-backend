@@ -51,6 +51,9 @@ definitions:
     type: object
   models.CriarUsuarioRequest:
     properties:
+      cpf:
+        description: 'Formato: 000.000.000-00'
+        type: string
       data_nascimento:
         type: string
       email:
@@ -73,6 +76,7 @@ definitions:
         minLength: 2
         type: string
     required:
+    - cpf
     - data_nascimento
     - email
     - genero
@@ -109,6 +113,27 @@ definitions:
     required:
     - email
     - senha
+    type: object
+  models.PIXRequest:
+    properties:
+      cpf:
+        example: 123.456.789-00
+        type: string
+      id_usuario:
+        example: 1
+        type: integer
+      valor:
+        example: 50
+        type: number
+    type: object
+  models.PIXResponse:
+    properties:
+      novo_saldo:
+        type: number
+      payload:
+        type: string
+      qrcode_base64:
+        type: string
     type: object
   models.RemoverAmigoRequest:
     properties:
@@ -404,6 +429,40 @@ paths:
       summary: Autenticar usuário
       tags:
       - usuarios
+  /api/pagamento/pix:
+    post:
+      consumes:
+      - application/json
+      description: Gera um QR Code para depósito. O valor é creditado automaticamente
+        no saldo do usuário após a geração. Requer validação de CPF.
+      parameters:
+      - description: Dados do Depósito
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.PIXRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.PIXResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Depositar saldo via PIX
+      tags:
+      - Pagamento
   /api/usuarios:
     get:
       description: Retorna todos os usuários cadastrados
